@@ -25,10 +25,6 @@ func main() {
 	application := app.NewApp(log, cfg.GRPC.Port, cfg.StoragePath, cfg.TokenTTl)
 	go application.GRPCServer.MustRun()
 
-	//TODO: инициализировать приложение (internal/app)
-
-	//TODO: запустить gRPC-сервер приложений
-
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 

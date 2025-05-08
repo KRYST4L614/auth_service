@@ -2,6 +2,9 @@ package auth
 
 import (
 	"context"
+	"errors"
+	"github.com/KRYST4L614/auth_service/internal/services/auth"
+	"github.com/KRYST4L614/auth_service/internal/storage"
 	ssov1 "github.com/KRYST4L614/auth_service_protos/gen/go/sso"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -34,6 +37,9 @@ func (s *serverAPI) Register(ctx context.Context, req *ssov1.RegisterRequest) (*
 
 	userId, err := s.auth.Register(ctx, req.GetEmail(), req.GetPassword())
 	if err != nil {
+		if errors.Is(err, auth.ErrUserExists) {
+			return nil, status.Errorf(codes.AlreadyExists, "user already exists")
+		}
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
@@ -47,7 +53,10 @@ func (s *serverAPI) Login(ctx context.Context, req *ssov1.LoginRequest) (*ssov1.
 
 	token, err := s.auth.Login(ctx, req.GetEmail(), req.GetPassword(), int(req.GetAppId()))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "internal server error")
+		if errors.Is(err, auth.ErrInvalidCredentials) {
+			return nil, status.Error(codes.InvalidArgument, "invalid credentials")
+		}
+		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
 	return &ssov1.LoginResponse{Token: token}, nil
@@ -60,6 +69,9 @@ func (s *serverAPI) IsAdmin(ctx context.Context, req *ssov1.IsAdminRequest) (*ss
 
 	isAdmin, err := s.auth.IsAdmin(ctx, int(req.GetUserId()))
 	if err != nil {
+		if errors.Is(err, storage.ErrUserNotFound) {
+			return nil, status.Errorf(codes.NotFound, "user not found")
+		}
 		return nil, status.Errorf(codes.Internal, "internal server error")
 	}
 

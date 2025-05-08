@@ -2,6 +2,8 @@ package app
 
 import (
 	grpcapp "github.com/KRYST4L614/auth_service/internal/app/grpc"
+	"github.com/KRYST4L614/auth_service/internal/services/auth"
+	"github.com/KRYST4L614/auth_service/internal/storage/sqlite"
 	"log/slog"
 	"time"
 )
@@ -16,11 +18,14 @@ func NewApp(
 	storagePath string,
 	tokenTTL time.Duration,
 ) *App {
-	// TODO: инициализировать хранилище
+	storage, err := sqlite.NewStorage(storagePath)
+	if err != nil {
+		panic(err)
+	}
 
-	// TODO: init auth service
+	authService := auth.New(log, storage, storage, storage, tokenTTL)
 
-	grpcApp := grpcapp.NewApp(log, grpcPort)
+	grpcApp := grpcapp.NewApp(log, authService, grpcPort)
 
 	return &App{
 		GRPCServer: grpcApp,
