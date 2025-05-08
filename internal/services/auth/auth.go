@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+//go:generate mockgen -destination=mock_auth.go -package=auth . UserStorage,UserProvider,AppProvider
+
 var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrInvalidAppId       = errors.New("invalid app id")
@@ -82,17 +84,17 @@ func (auth *Auth) Login(
 	user, err := auth.userProvider.User(ctx, email)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
-			log.Warn("user not found", err)
+			log.Warn("user not found", slog.Any("error", err))
 
 			return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
 		}
 
-		log.Info("failed to login", err)
+		log.Info("failed to login", slog.Any("error", err))
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword(user.PassHash, []byte(password)); err != nil {
-		log.Info("invalid credentials", err)
+		log.Info("invalid credentials", slog.Any("error", err))
 
 		return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
 	}
@@ -100,7 +102,7 @@ func (auth *Auth) Login(
 	app, err := auth.appProvider.App(ctx, appId)
 	if err != nil {
 		if errors.Is(err, storage.ErrAppNotFound) {
-			log.Warn("app not found", err)
+			log.Warn("app not found", slog.Any("error", err))
 
 			return "", fmt.Errorf("%s: %w", op, ErrInvalidAppId)
 		}
@@ -111,7 +113,7 @@ func (auth *Auth) Login(
 
 	token, err := jwt.NewToken(user, app, auth.tokenTTL)
 	if err != nil {
-		log.Error("failed to generate token", err)
+		log.Error("failed to generate token", slog.Any("error", err))
 
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
@@ -136,7 +138,7 @@ func (auth *Auth) Register(
 
 	passHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Error("failed to generate password hash", err)
+		log.Error("failed to generate password hash", slog.Any("error", err))
 		return -1, fmt.Errorf("%s:%w", op, err)
 	}
 
@@ -147,7 +149,7 @@ func (auth *Auth) Register(
 
 			return -1, fmt.Errorf("%s: %w", op, ErrUserExists)
 		}
-		log.Error("failed to save user", err)
+		log.Error("failed to save user", slog.Any("error", err))
 		return -1, fmt.Errorf("%s:%w", op, err)
 	}
 
@@ -165,7 +167,7 @@ func (auth *Auth) IsAdmin(ctx context.Context, userId int) (bool, error) {
 
 	isAdmin, err := auth.userProvider.IsAdmin(ctx, int64(userId))
 	if err != nil {
-		log.Error("failed to check if user is admin", err)
+		log.Error("failed to check if user is admin", slog.Any("error", err))
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
 

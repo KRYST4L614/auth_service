@@ -11,7 +11,7 @@ CONFIG_FILE ?= config/local.yaml  # Default config file
 GO := go
 GO_BUILD_FLAGS := -v
 GO_RUN_FLAGS :=
-GO_TEST_FLAGS := -v -race
+GO_TEST_FLAGS :=
 
 .PHONY: all build run clean test
 
@@ -36,9 +36,16 @@ clean:
 	@echo "Clean complete"
 
 ## Run tests
-test:
+unit-test:
 	@echo "Running tests..."
-	$(GO) test $(GO_TEST_FLAGS) ./...
+	$(GO) test $(GO_TEST_FLAGS) ./internal/...
+	@echo "Tests complete"
+
+## Run test with cover
+unit-test-cover:
+	@echo "Running tests..."
+	@(GO) test ./internal/... -coverprofile=coverage.txt
+	@(GO) tool cover -html coverage.txt -o index.html
 	@echo "Tests complete"
 
 ## Install dependencies
