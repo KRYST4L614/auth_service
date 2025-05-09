@@ -35,6 +35,12 @@ clean:
 	@rm -rf $(BUILD_DIR)
 	@echo "Clean complete"
 
+## Run generate
+generate:
+	@echo "Running generate..."
+	$(GO) generate ./...
+	@echo "Generate complete"
+
 ## Run tests
 unit-test:
 	@echo "Running tests..."
@@ -44,8 +50,8 @@ unit-test:
 ## Run test with cover
 unit-test-cover:
 	@echo "Running tests..."
-	@(GO) test ./internal/... -coverprofile=coverage.txt
-	@(GO) tool cover -html coverage.txt -o index.html
+	$(GO) test ./internal/... -coverprofile=coverage.txt
+	$(GO) tool cover -html coverage.txt -o index.html
 	@echo "Tests complete"
 
 ## Install dependencies
@@ -57,9 +63,11 @@ deps:
 ## Show help
 help:
 	@echo "Available targets:"
-	@echo "  build   - compile the application"
-	@echo "  start     - run the application"
-	@echo "  test    - run tests"
-	@echo "  clean   - remove build artifacts"
-	@echo "  deps    - install dependencies"
-	@echo "  help    - show this help message"
+	@echo "  build              - compile the application"
+	@echo "  start              - run the application"
+	@echo "  unit-test   	    - run tests"
+	@echo "  unit-test-cover    - run tests with cover"
+	@echo "  clean              - remove build artifacts"
+	@echo "  generate           - generate"
+	@echo "  deps               - install dependencies"
+	@echo "  help               - show this help message"
